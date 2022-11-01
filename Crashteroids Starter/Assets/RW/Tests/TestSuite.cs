@@ -11,23 +11,22 @@ namespace Tests
 
         private Game game;
 
-        // A Test behaves as an ordinary method
-        [Test]
-        public void TestSuiteSimplePasses()
+        
+
+
+        [SetUp]
+        public void Setup()
         {
-            // Use the Assert class to test conditions
+            GameObject gameGameObject =
+                MonoBehaviour.Instantiate(Resources.Load<GameObject>("Prefabs/Game"));
+            game = gameGameObject.GetComponent<Game>();
         }
 
-        // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
-        // `yield return null;` to skip a frame.
-        [UnityTest]
-        public IEnumerator TestSuiteWithEnumeratorPasses()
+        [TearDown]
+        public void Teardown()
         {
-            // Use the Assert class to test conditions.
-            // Use yield to skip a frame.
-            yield return null;
+            Object.Destroy(game.gameObject);
         }
-
 
 
         [UnityTest]
@@ -47,5 +46,86 @@ namespace Tests
 
             Object.Destroy(game.gameObject);
         }
+
+
+        [UnityTest]
+        public IEnumerator GameOverOccursOnAsteroidCollision()
+        {
+            GameObject gameGameObject = MonoBehaviour.Instantiate(Resources.Load<GameObject>("Prefabs/Game"));
+            game = gameGameObject.GetComponent<Game>();
+
+            GameObject asteroid = game.GetSpawner().SpawnAsteroid();
+
+            asteroid.transform.position = game.GetShip().transform.position;
+
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.True(game.isGameOver);
+
+            Object.Destroy(game.gameObject);
+        }
+
+        [UnityTest]
+        public IEnumerator NewGameRestartsGame()
+        {
+            
+            game.isGameOver = true;
+            game.NewGame();
+            
+            Assert.False(game.isGameOver);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator LaserMovesUp()
+        {
+            
+            GameObject laser = game.GetShip().SpawnLaser();
+            
+            float initialYPos = laser.transform.position.y;
+            yield return new WaitForSeconds(0.1f);
+            
+            Assert.Greater(laser.transform.position.y, initialYPos);
+        }
+
+        [UnityTest]
+        public IEnumerator LaserDestroysAsteroid()
+        {
+           
+            GameObject asteroid = game.GetSpawner().SpawnAsteroid();
+
+            asteroid.transform.position = Vector3.zero;
+
+            GameObject laser = game.GetShip().SpawnLaser();
+
+            laser.transform.position = Vector3.zero;
+
+            yield return new WaitForSeconds(0.1f);
+            
+            UnityEngine.Assertions.Assert.IsNull(asteroid);
+        }
+
+
+        [UnityTest]
+        public IEnumerator DestroyedAsteroidRaisesScore()
+        {
+            
+            GameObject asteroid = game.GetSpawner().SpawnAsteroid();
+
+            asteroid.transform.position = Vector3.zero;
+
+            GameObject laser = game.GetShip().SpawnLaser();
+
+            laser.transform.position = Vector3.zero;
+
+            yield return new WaitForSeconds(0.1f);
+
+            
+            Assert.AreEqual(game.score, 1);
+        }
+
+
+
     }
 }
